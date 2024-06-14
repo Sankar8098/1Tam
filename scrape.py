@@ -19,7 +19,10 @@ class Movie:
 
     def __str__(self):
         return f"Movie: {self.name} (Released on: {self.release_datetime})"
-
+@dataclass(commands=['start'])
+def random_answer(message):
+    bot.send_message(chat_id=message.chat.id,text=f"Hello👋 \n\n🗳Get latest Movies from 1Tamilmv\n\n⚙️*How to use me??*🤔\n\n✯ Please Enter */view* command and you'll get magnet link as well as link to torrent file 😌\n\nShare and Support💝",parse_mode='Markdown',reply_markup=keyboard)
+    
 @dataclass
 class Torrent:
     file_name: str
