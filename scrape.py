@@ -38,13 +38,28 @@ class Torrent:
 
 async def scrape_from_url(url: str) -> Movie:
     session = AsyncHTMLSession()
-    response = await session.get(url)
-    try:
-        await response.html.arender()
-    except Exception as e:
-        logger.error(f"Error rendering the page: {e}")
+    retries = 3
+    for attempt in range(1, retries + 1):
+        try:
+            response = await session.get(url)
+            await response.html.arender()
+            break  # Break out of retry loop if successful
+        except Exception as e:
+            logger.error(f"Error rendering the page (Attempt {attempt}/{retries}): {e}")
+            await asyncio.sleep(5)  # Wait before retrying
+    else:
+        logger.error(f"Failed to render page after {retries} attempts.")
         return None
+
     page = response.html
+    # Parse page content here
+    # ...
+
+    session.close()  # Close the session explicitly
+
+    # Return movie data
+    return movie_data
+
 
     name = page.find("h3")[0].text
     release_datetime_str = page.find("time")[0].attrs["datetime"]
