@@ -6,3 +6,4 @@ pymongo[srv]
 dnspython
 lxml
 lxml_html_clean
+python-telegram-bot
