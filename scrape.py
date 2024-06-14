@@ -6,8 +6,8 @@ from datetime import datetime
 from pymongo import MongoClient
 from time import sleep
 import feedparser
-from telegram import Bot
-from telegram.constants import ParseMode
+from telegram import Bot, Update
+from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
 
 @dataclass
 class Movie:
@@ -19,10 +19,7 @@ class Movie:
 
     def __str__(self):
         return f"Movie: {self.name} (Released on: {self.release_datetime})"
-@dataclass(commands=['start'])
-def random_answer(message):
-    bot.send_message(chat_id=message.chat.id,text=f"Hello👋 \n\n🗳Get latest Movies from 1Tamilmv\n\n⚙️*How to use me??*🤔\n\n✯ Please Enter */view* command and you'll get magnet link as well as link to torrent file 😌\n\nShare and Support💝",parse_mode='Markdown',reply_markup=keyboard)
-    
+
 @dataclass
 class Torrent:
     file_name: str
@@ -82,13 +79,33 @@ async def process_new_movie_data(movie_data: Movie, bot_token: str, chat_id: str
     message = f"*New Movie Release*\n\n{movie_data}\n\n[View Details]({movie_data.poster_url})"
     await bot.send_message(chat_id=chat_id, text=message, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
 
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    message = (
+        "Hello👋\n\n"
+        "🗳Get latest Movies from 1Tamilmv\n\n"
+        "⚙️*How to use me??*🤔\n\n"
+        "✯ Please Enter */view* command and you'll get magnet link as well as link to torrent file 😌\n\n"
+        "Share and Support💝"
+    )
+    await update.message.reply_text(message, parse_mode=ParseMode.MARKDOWN)
+
+async def view(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text("Fetching latest movies...")
+
 async def main():
     rss_url = "https://rss.app/feeds/yddXEDeHj3XYhNNN.xml"
-    telegram_bot_token = "6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg"
+    telegram_bot_token = "6769849216:AAGPVUHLAzt7p9pFldV03v2YYGjyE0sEZHQ"
     telegram_channel_id = "-1001571491517"
 
     initialize_database()
     previous_movie_links = load_previous_movie_links()
+
+    application = ApplicationBuilder().token(telegram_bot_token).build()
+
+    application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("view", view))
+
+    asyncio.create_task(application.start())
 
     while True:
         feed = feedparser.parse(rss_url)
