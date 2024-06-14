@@ -81,7 +81,7 @@ async def process_new_movie_data(movie_data: Movie, bot_token: str, chat_id: str
 
 async def main():
     rss_url = "https://rss.app/feeds/yddXEDeHj3XYhNNN.xml"
-    telegram_bot_token = "6769849216:AAGPVUHLAzt7p9pFldV03v2YYGjyE0sEZHQ"
+    telegram_bot_token = "6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg"
     telegram_channel_id = "-1001571491517"
 
     initialize_database()
