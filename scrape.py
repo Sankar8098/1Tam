@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from requests_html import AsyncHTMLSession
 from dataclasses import dataclass
 from typing import List
@@ -8,6 +9,11 @@ import feedparser
 from telegram import Bot, Update
 from telegram.constants import ParseMode
 from telegram.ext import Application, CommandHandler, ContextTypes
+from telegram.error import TimedOut
+
+# Set up logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @dataclass
 class Movie:
@@ -77,7 +83,16 @@ def save_movie_link(link):
 async def process_new_movie_data(movie_data: Movie, bot_token: str, chat_id: str):
     bot = Bot(token=bot_token)
     message = f"*New Movie Release*\n\n{movie_data}\n\n[View Details]({movie_data.poster_url})"
-    await bot.send_message(chat_id=chat_id, text=message, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+    retries = 3
+    for _ in range(retries):
+        try:
+            await bot.send_message(chat_id=chat_id, text=message, parse_mode=ParseMode.MARKDOWN, disable_web_page_preview=True)
+            break
+        except TimedOut as e:
+            logger.warning("Timed out while sending message. Retrying...")
+            await asyncio.sleep(5)
+    else:
+        logger.error("Failed to send message after multiple retries")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     message = (
@@ -125,4 +140,3 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-    
