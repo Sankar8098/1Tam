@@ -82,7 +82,7 @@ def scrape_from_url(url: str) -> Movie:
     movie = Movie(name, release_datetime, poster_url, screenshots, torrents)
     return movie
 
-MONGODB_CONNECTION_STRING = "mongodb+srv://spotify:spotify@cluster0.tmcsezs.mongodb.net/?retryWrites=true&w=majority"
+MONGODB_CONNECTION_STRING = "mongodb+srv://sankar:sankar@sankar.lldcdsx.mongodb.net/?retryWrites=true&w=majority"
 DATABASE_NAME = "movie_links_db"
 COLLECTION_NAME = "movie_links"
 
@@ -117,9 +117,9 @@ def process_new_movie_data(movie_data: Movie, bot_token: str, chat_id: str):
 
 if __name__ == "__main__":
     # Example usage:
-    rss_url = "https://www.1tamilmv.world/index.php?/forums/forum/11-web-hd-itunes-hd-bluray.xml"
-    telegram_bot_token = "1991263740:AAG4ujt3Y5PivwFMIvZg2Ysfk2cSw_p3q4c"
-    telegram_channel_id = "-1001587722715"
+    rss_url = "https://www.1tamilmv.eu/index.php?/forums/forum/11-web-hd-itunes-hd-bluray.xml"
+    telegram_bot_token = "6769849216:AAGPVUHLAzt7p9pFldV03v2YYGjyE0sEZHQ"
+    telegram_channel_id = "-1001571491517"
 
     # Initialize the database and load previous movie links
     initialize_database()
