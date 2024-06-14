@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 from requests_html import AsyncHTMLSession
 from dataclasses import dataclass
 from typing import List
@@ -57,7 +58,7 @@ async def scrape_from_url(url: str) -> Movie:
     movie = Movie(name, release_datetime, poster_url, screenshots, torrents)
     return movie
 
-MONGODB_CONNECTION_STRING = "mongodb+srv://sankar:sankar@sankar.lldcdsx.mongodb.net/?retryWrites=true&w=majority"
+MONGODB_CONNECTION_STRING = os.getenv("MONGODB_CONNECTION_STRING", "your_default_mongo_connection_string")
 DATABASE_NAME = "movie_links_db"
 COLLECTION_NAME = "movie_links"
 
@@ -109,8 +110,8 @@ async def view(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 async def main():
     rss_url = "https://rss.app/feeds/yddXEDeHj3XYhNNN.xml"
-    telegram_bot_token = "6769849216:AAGPVUHLAzt7p9pFldV03v2YYGjyE0sEZHQ"
-    telegram_channel_id = "-1001571491517"
+    telegram_bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "6489443094:AAFxg3ZVY7i0VKCbuJIre00SdTsJY5lEe7A")
+    telegram_channel_id = os.getenv("TELEGRAM_CHANNEL_ID", "-1001571491517")
 
     initialize_database()
     previous_movie_links = load_previous_movie_links()
@@ -140,3 +141,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+    
