@@ -4,10 +4,10 @@ from dataclasses import dataclass
 from typing import List
 from datetime import datetime
 from pymongo import MongoClient
-from time import sleep
 import feedparser
 from telegram import Bot, Update
-from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
+from telegram.constants import ParseMode
+from telegram.ext import Application, CommandHandler, ContextTypes
 
 @dataclass
 class Movie:
@@ -100,26 +100,29 @@ async def main():
     initialize_database()
     previous_movie_links = load_previous_movie_links()
 
-    application = ApplicationBuilder().token(telegram_bot_token).build()
+    application = Application.builder().token(telegram_bot_token).build()
 
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("view", view))
 
-    asyncio.create_task(application.start())
+    async with application:
+        await application.initialize()
+        await application.start()
 
-    while True:
-        feed = feedparser.parse(rss_url)
+        while True:
+            feed = feedparser.parse(rss_url)
 
-        for entry in feed.entries:
-            movie_url = entry.link
+            for entry in feed.entries:
+                movie_url = entry.link
 
-            if movie_url not in previous_movie_links:
-                movie_data = await scrape_from_url(movie_url)
-                await process_new_movie_data(movie_data, telegram_bot_token, telegram_channel_id)
-                save_movie_link(movie_url)
-                previous_movie_links.add(movie_url)
+                if movie_url not in previous_movie_links:
+                    movie_data = await scrape_from_url(movie_url)
+                    await process_new_movie_data(movie_data, telegram_bot_token, telegram_channel_id)
+                    save_movie_link(movie_url)
+                    previous_movie_links.add(movie_url)
 
-        await asyncio.sleep(3600)
+            await asyncio.sleep(3600)
 
 if __name__ == "__main__":
     asyncio.run(main())
+    
