@@ -1,81 +1,111 @@
 import asyncio
-import httpx
+import requests
 from bs4 import BeautifulSoup
-import re
 import telebot
 from telebot import types
 
 TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
+
 bot = telebot.TeleBot(TOKEN)
 
-# Function to fetch movie data asynchronously
+button1 = types.InlineKeyboardButton(text="⚡ Powered by", url='https://t.me/heyboy2004')
+button2 = types.InlineKeyboardButton(text="🔗 Gdrive channel", url='https://t.me/GdtotLinkz')
+button3 = types.InlineKeyboardButton(text="📜 Status channel", url='https://t.me/TmvStatus')
+keyboard = types.InlineKeyboardMarkup().add(types.InlineKeyboardButton('👨‍💻 Developed by', url='https://github.com/shinas101')).add(button1).add(button2).add(button3)
+keyboard2 = types.InlineKeyboardMarkup().add(button2).add(button3)
+
+@bot.message_handler(commands=['start'])
+def random_answer(message):
+    bot.send_message(chat_id=message.chat.id,
+                     text=f"Hello! 👋\n\n🗳 Get latest Movies from 1Tamilmv\n\n⚙️ *How to use me?* 🤔\n\n"
+                          f"✯ Please Enter */view* command and you'll get magnet link as well as link to torrent file 😌\n\n"
+                          f"Share and Support! 💝",
+                     parse_mode='Markdown',
+                     reply_markup=keyboard)
+
+@bot.message_handler(commands=['view'])
+def start(message):
+    bot.send_message(message.chat.id, text="*Please wait for 10 seconds*", parse_mode='Markdown')
+    asyncio.create_task(fetch_and_send_movies(message.chat.id))
+
+async def fetch_and_send_movies(chat_id):
+    try:
+        movie_list, real_dict = await tamilmv()
+        markup = makeKeyboard(movie_list)
+        await bot.send_message(chat_id=chat_id,
+                               text="Select a Movie from the list 🙂 : ",
+                               reply_markup=markup,
+                               parse_mode='HTML')
+    except Exception as e:
+        await bot.send_message(chat_id=chat_id, text=f"Error: {e}")
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_query(call):
+    asyncio.create_task(send_movie_links(call.message.chat.id, call.data))
+
+async def send_movie_links(chat_id, movie_key):
+    try:
+        await bot.send_message(chat_id=chat_id, text="Here's your Movie links 🎥 ", parse_mode='markdown')
+        for link in real_dict[movie_key]:
+            await bot.send_message(chat_id=chat_id, text=link, parse_mode='markdown')
+        await bot.send_message(chat_id=chat_id,
+                               text=f"🌐 Please Join Our Status Channel",
+                               parse_mode='markdown',
+                               reply_markup=keyboard2)
+    except KeyError:
+        await bot.send_message(chat_id=chat_id, text="Movie not found.")
+
+def makeKeyboard(movie_list):
+    markup = types.InlineKeyboardMarkup()
+    for key, value in enumerate(movie_list):
+        markup.add(types.InlineKeyboardButton(text=value, callback_data=f"{key}"))
+    return markup
+
 async def tamilmv():
     mainUrl = 'https://www.1TamilMV.eu/'
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
         'sec-ch-ua': '"Chromium";v="106", "Google Chrome";v="106", "Not;A=Brand";v="99"',
         'sec-ch-ua-mobile': '?0',
-        'Connection':'Keep-alive',
+        'Connection': 'Keep-alive',
         'sec-ch-ua-platform': '"Windows"',
     }
-    async with httpx.AsyncClient() as client:
-        try:
-            response = await client.get(mainUrl, headers=headers)
-            soup = BeautifulSoup(response.text, 'lxml')
-            linker = [link['href'] for link in soup.select('div.ipsType_break a')]
-            movie_data = await asyncio.gather(*[scrape_movie_data(client, link) for link in linker[:21]])
-            return movie_data
-        except (httpx.HTTPStatusError, httpx.RequestError, ValueError) as e:
-            print(f"Error fetching movie data: {e}")
-            return []
 
-async def scrape_movie_data(client, url):
-    try:
-        response = await client.get(url)
-        soup = BeautifulSoup(response.text, 'lxml')
-        mag_links = [a['href'] for a in soup.find_all('a', href=True) if a['href'].startswith('magnet')]
-        torrent_links = [a['href'] for a in soup.find_all('a', {'data-fileext': 'torrent'}, href=True)]
-        movie_title = soup.find('title').text.strip()
-        return {
-            'title': movie_title,
-            'magnet_links': mag_links,
-            'torrent_links': torrent_links
-        }
-    except (httpx.HTTPStatusError, httpx.RequestError, ValueError) as e:
-        print(f"Error scraping {url}: {e}")
-        return None
+    movie_dict = {}
+    real_dict = {}
+    movie_list = []
 
-# Example usage of asyncio in bot command
-@bot.message_handler(commands=['view'])
-async def start(message):
-    await bot.send_message(message.chat.id, "Please wait for 10 seconds...")
-    movie_data = await tamilmv()
-    if movie_data:
-        keyboard = types.InlineKeyboardMarkup()
-        for idx, movie in enumerate(movie_data):
-            keyboard.add(types.InlineKeyboardButton(text=movie['title'], callback_data=str(idx)))
-        await bot.send_message(message.chat.id, "Select a Movie from the list:", reply_markup=keyboard)
-    else:
-        await bot.send_message(message.chat.id, "Failed to fetch movie data. Please try again later.")
+    web = requests.get(mainUrl, headers=headers)
+    soup = BeautifulSoup(web.text, 'html.parser')
+    
+    num = 0
+    temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
 
-# Callback query handling
-@bot.callback_query_handler(func=lambda call: True)
-async def callback_query(call):
-    try:
-        movie_idx = int(call.data)
-        movie = movie_data[movie_idx]
-        response_text = f"Here's your Movie links for {movie['title']}:\n\n"
-        for magnet_link in movie['magnet_links']:
-            response_text += f"Magnet Link: {magnet_link}\n"
-        response_text += f"\n🤖 @Tamilmv_movie_bot"
-        await bot.send_message(call.message.chat.id, response_text, parse_mode='markdown')
-    except IndexError:
-        await bot.send_message(call.message.chat.id, "Invalid selection. Please select a valid movie.")
+    for i in range(21):
+        title = temps[i].find_all('a')[0].text.strip()
+        movie_dict[title] = None
+        movie_list.append(title)
+        links = temps[i].find('a')['href']
+        content = str(links)
+        html = requests.get(content)
+        soup = BeautifulSoup(html.text, 'html.parser')
+        alltitles = []
+        for i in soup.find_all('a', {'data-fileext': 'torrent', 'href': True}):
+            alltitles.append(i['href'])
+        real_dict[title] = alltitles
 
-# Main function to start the bot
+    return movie_list, real_dict
+
 def main():
-    bot.infinity_polling()
-
+    try:
+        bot.infinity_polling(timeout=10, long_polling_timeout=5)
+    except KeyboardInterrupt:
+        print("Bot stopped.")
+    finally:
+        print("Closing bot...")
+        bot.stop_polling()
+        bot.polling(none_stop=False)
+        bot.polling()
+        
 if __name__ == '__main__':
     main()
-    
