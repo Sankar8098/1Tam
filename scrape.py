@@ -38,28 +38,29 @@ class Torrent:
 
 async def scrape_from_url(url: str) -> Movie:
     session = AsyncHTMLSession()
+    response = await session.get(url)
     try:
-        response = await session.get(url)
         await response.html.arender()
-        page = response.html
+    except Exception as e:
+        logger.error(f"Error rendering the page: {e}")
+        return None
+    page = response.html
 
-        name = page.find("h3")[0].text
-        release_datetime_str = page.find("time")[0].attrs["datetime"]
-        date_format = "%Y-%m-%dT%H:%M:%SZ"
-        release_datetime = datetime.strptime(release_datetime_str, date_format)
-        img_tags = page.find("img.ipsImage")
-        pics = [img.attrs["src"] for img in img_tags if img.attrs["src"].lower().split(".")[-1] in ("jpg", "jpeg", "png")]
-        poster_url = pics[0] if pics else ""
-        screenshots = pics[1:]
-        magnet_links = [a.attrs["href"] for a in page.find("a.skyblue-button")]
-        torrent_links = [a.attrs["href"] for a in page.find("a[data-fileext='torrent']")]
-        file_names = [span.text.strip() for span in page.find('span[style="color:#0000ff;"]')]
+    name = page.find("h3")[0].text
+    release_datetime_str = page.find("time")[0].attrs["datetime"]
+    date_format = "%Y-%m-%dT%H:%M:%SZ"
+    release_datetime = datetime.strptime(release_datetime_str, date_format)
+    img_tags = page.find("img.ipsImage")
+    pics = [img.attrs["src"] for img in img_tags if img.attrs["src"].lower().split(".")[-1] in ("jpg", "jpeg", "png")]
+    poster_url = pics[0] if pics else ""
+    screenshots = pics[1:]
+    magnet_links = [a.attrs["href"] for a in page.find("a.skyblue-button")]
+    torrent_links = [a.attrs["href"] for a in page.find("a[data-fileext='torrent']")]
+    file_names = [span.text.strip() for span in page.find('span[style="color:#0000ff;"]')]
 
-        torrents = [Torrent(file_name, torrent_link, magnet_link) for file_name, torrent_link, magnet_link in zip(file_names, torrent_links, magnet_links)]
-        movie = Movie(name, release_datetime, poster_url, screenshots, torrents)
-        return movie
-    finally:
-        await session.close()
+    torrents = [Torrent(file_name, torrent_link, magnet_link) for file_name, torrent_link, magnet_link in zip(file_names, torrent_links, magnet_links)]
+    movie = Movie(name, release_datetime, poster_url, screenshots, torrents)
+    return movie
 
 MONGODB_CONNECTION_STRING = os.getenv("MONGODB_CONNECTION_STRING", "mongodb+srv://skvillage:1234@autofilter.ul9z8je.mongodb.net/?retryWrites=true&w=majority&appName=autofilter")
 DATABASE_NAME = "skvillage"
@@ -111,15 +112,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def view(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     await update.message.reply_text("Fetching latest movies...")
 
-async def fetch_and_process_movies(rss_url: str, bot_token: str, chat_id: str, previous_movie_links: set):
-    feed = feedparser.parse(rss_url)
-    for entry in feed.entries:
-        movie_url = entry.link
-        if movie_url not in previous_movie_links:
-            movie_data = await scrape_from_url(movie_url)
-            await process_new_movie_data(movie_data, bot_token, chat_id)
-            save_movie_link(movie_url)
-            previous_movie_links.add(movie_url)
+async def fetch_and_process_movies(rss_url, telegram_bot_token, telegram_channel_id, previous_movie_links):
+    while True:
+        feed = feedparser.parse(rss_url)
+
+        for entry in feed.entries:
+            movie_url = entry.link
+
+            if movie_url not in previous_movie_links:
+                movie_data = await scrape_from_url(movie_url)
+                if movie_data:
+                    await process_new_movie_data(movie_data, telegram_bot_token, telegram_channel_id)
+                    save_movie_link(movie_url)
+                    previous_movie_links.add(movie_url)
+
+        await asyncio.sleep(3600)
 
 async def main():
     rss_url = "https://rss.app/feeds/yddXEDeHj3XYhNNN.xml"
@@ -138,15 +145,8 @@ async def main():
         await application.initialize()
         await application.start()
 
-        try:
-            while True:
-                await fetch_and_process_movies(rss_url, telegram_bot_token, telegram_channel_id, previous_movie_links)
-                await asyncio.sleep(3600)
-        except asyncio.CancelledError:
-            pass
-        finally:
-            await application.stop()
-            await application.shutdown()
+        await fetch_and_process_movies(rss_url, telegram_bot_token, telegram_channel_id, previous_movie_links)
 
 if __name__ == "__main__":
     asyncio.run(main())
+    
