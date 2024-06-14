@@ -58,8 +58,8 @@ async def scrape_from_url(url: str) -> Movie:
     movie = Movie(name, release_datetime, poster_url, screenshots, torrents)
     return movie
 
-MONGODB_CONNECTION_STRING = os.getenv("MONGODB_CONNECTION_STRING", "your_default_mongo_connection_string")
-DATABASE_NAME = "movie_links_db"
+MONGODB_CONNECTION_STRING = os.getenv("MONGODB_CONNECTION_STRING", "mongodb+srv://skvillage:1234@autofilter.ul9z8je.mongodb.net/?retryWrites=true&w=majority&appName=autofilter")
+DATABASE_NAME = "skvillage"
 COLLECTION_NAME = "movie_links"
 
 def initialize_database():
