@@ -117,7 +117,7 @@ def process_new_movie_data(movie_data: Movie, bot_token: str, chat_id: str):
 
 if __name__ == "__main__":
     # Example usage:
-    rss_url = "https://www.1tamilmv.eu/index.php?/forums/forum/11-web-hd-itunes-hd-bluray.xml"
+    rss_url = "https://rss.app/feeds/yddXEDeHj3XYhNNN.xml"
     telegram_bot_token = "6769849216:AAGPVUHLAzt7p9pFldV03v2YYGjyE0sEZHQ"
     telegram_channel_id = "-1001571491517"
 
