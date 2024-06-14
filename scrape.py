@@ -1,59 +1,16 @@
-from asyncio import events
+import asyncio
+import httpx
+from bs4 import BeautifulSoup
+import re
 import telebot
 from telebot import types
-from telegram import (InlineKeyboardButton, InlineKeyboardMarkup)
-import requests
-import re
-from bs4 import BeautifulSoup
-import asyncio
 
-TOKEN = '6769849216:AAGPVUHLAzt7p9pFldV03v2YYGjyE0sEZHQ'
-
+TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
 bot = telebot.TeleBot(TOKEN)
 
-button1 = telebot.types.InlineKeyboardButton(text="⚡Powered by ",url='https://t.me/heyboy2004')
-button2 = telebot.types.InlineKeyboardButton(text="🔗 Gdrive channel ",url='https://t.me/GdtotLinkz')
-button3 = telebot.types.InlineKeyboardButton(text="📜 Status channel ",url='https://t.me/TmvStatus')
-keyboard = telebot.types.InlineKeyboardMarkup().add(telebot.types.InlineKeyboardButton('👨‍💻 Developed by', url='github.com/shinas101')).add(button1).add(button2).add(button3)
-keyboard2 = telebot.types.InlineKeyboardMarkup().add(button2).add(button3)
-
-@bot.message_handler(commands=['start'])
-def random_answer(message):
-    bot.send_message(chat_id=message.chat.id,text=f"Hello👋 \n\n🗳Get latest Movies from 1Tamilmv\n\n⚙️*How to use me??*🤔\n\n✯ Please Enter */view* command and you'll get magnet link as well as link to torrent file 😌\n\nShare and Support💝",parse_mode='Markdown',reply_markup=keyboard)
-
-@bot.message_handler(commands=['view'])
-def start(message):
-  bot.send_message(message.chat.id,text="*Please wait for 10 seconds*",parse_mode='Markdown')
-  tamilmv()
-  bot.send_message(chat_id=message.chat.id,
-                text="Select a Movie from the list 🙂 : ",
-                reply_markup=makeKeyboard(),
-                parse_mode='HTML')
-
-@bot.callback_query_handler(func=lambda message: True)
-def callback_query(call):
-    bot.send_message(call.message.chat.id,text=f"Here's your Movie links 🎥 ",parse_mode='markdown')
-    for key , value in enumerate(movie_list):
-        if call.data == f"{key}":
-            print("HI")
-            if movie_list[int(call.data)] in real_dict.keys():
-                for i in real_dict[movie_list[int(call.data)]]:                  
-                  bot.send_message(call.message.chat.id,text=f"{i}\n\n🤖 @Tamilmv\_movie\_bot",parse_mode='markdown')
-                  print(real_dict[movie_list[int(call.data)]])
-    bot.send_message(call.message.chat.id,text=f"🌐 Please Join Our Status Channel",parse_mode='markdown',reply_markup=keyboard2)
-      
-def makeKeyboard():
-    markup = types.InlineKeyboardMarkup()
-
-    for key,value in enumerate(movie_list):
-        markup.add(types.InlineKeyboardButton(text=value,callback_data=f"{key}"))
-
-    return markup
-
-def tamilmv():
+# Function to fetch movie data asynchronously
+async def tamilmv():
     mainUrl = 'https://www.1TamilMV.eu/'
-    mainlink = []
-
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
         'sec-ch-ua': '"Chromium";v="106", "Google Chrome";v="106", "Not;A=Brand";v="99"',
@@ -61,78 +18,64 @@ def tamilmv():
         'Connection':'Keep-alive',
         'sec-ch-ua-platform': '"Windows"',
     }
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.get(mainUrl, headers=headers)
+            soup = BeautifulSoup(response.text, 'lxml')
+            linker = [link['href'] for link in soup.select('div.ipsType_break a')]
+            movie_data = await asyncio.gather(*[scrape_movie_data(client, link) for link in linker[:21]])
+            return movie_data
+        except (httpx.HTTPStatusError, httpx.RequestError, ValueError) as e:
+            print(f"Error fetching movie data: {e}")
+            return []
 
-    global movie_dict 
-    movie_dict = {}
-    global real_dict
-    real_dict  = {}
-    web = requests.request("GET",mainUrl,headers=headers)
-    soup = BeautifulSoup(web.text,'lxml')
-    linker = []
-    magre = []
-    badtitles = []
-    realtitles = []
-    global movie_list
-    movie_list = []
+async def scrape_movie_data(client, url):
+    try:
+        response = await client.get(url)
+        soup = BeautifulSoup(response.text, 'lxml')
+        mag_links = [a['href'] for a in soup.find_all('a', href=True) if a['href'].startswith('magnet')]
+        torrent_links = [a['href'] for a in soup.find_all('a', {'data-fileext': 'torrent'}, href=True)]
+        movie_title = soup.find('title').text.strip()
+        return {
+            'title': movie_title,
+            'magnet_links': mag_links,
+            'torrent_links': torrent_links
+        }
+    except (httpx.HTTPStatusError, httpx.RequestError, ValueError) as e:
+        print(f"Error scraping {url}: {e}")
+        return None
 
-    num = 0
-    
-    temps = soup.find_all('div',{'class' : 'ipsType_break ipsContained'})
+# Example usage of asyncio in bot command
+@bot.message_handler(commands=['view'])
+async def start(message):
+    await bot.send_message(message.chat.id, "Please wait for 10 seconds...")
+    movie_data = await tamilmv()
+    if movie_data:
+        keyboard = types.InlineKeyboardMarkup()
+        for idx, movie in enumerate(movie_data):
+            keyboard.add(types.InlineKeyboardButton(text=movie['title'], callback_data=str(idx)))
+        await bot.send_message(message.chat.id, "Select a Movie from the list:", reply_markup=keyboard)
+    else:
+        await bot.send_message(message.chat.id, "Failed to fetch movie data. Please try again later.")
 
-    for i in range(21):
-        title = temps[i].findAll('a')[0].text
-        badtitles.append(title)
-        links = temps[i].find('a')['href']
-        content = str(links)
-        linker.append(content)
-        
-    for element in badtitles:
-        realtitles.append(element.strip())
-        movie_dict[element.strip()] = None
-    print(badtitles)
-    movie_list = list(movie_dict)
-        
-    for url in linker:
+# Callback query handling
+@bot.callback_query_handler(func=lambda call: True)
+async def callback_query(call):
+    try:
+        movie_idx = int(call.data)
+        movie = movie_data[movie_idx]
+        response_text = f"Here's your Movie links for {movie['title']}:\n\n"
+        for magnet_link in movie['magnet_links']:
+            response_text += f"Magnet Link: {magnet_link}\n"
+        response_text += f"\n🤖 @Tamilmv_movie_bot"
+        await bot.send_message(call.message.chat.id, response_text, parse_mode='markdown')
+    except IndexError:
+        await bot.send_message(call.message.chat.id, "Invalid selection. Please select a valid movie.")
 
-        html = requests.request("GET",url)
-        soup = BeautifulSoup(html.text,'lxml')
-        pattern=re.compile(r"magnet:\?xt=urn:[a-z0-9]+:[a-zA-Z0-9]{40}")
-        bigtitle = soup.find_all('a')
-        alltitles = []
-        filelink = []
-        mag = []
-        for i in soup.find_all('a', href=True):
-            if i['href'].startswith('magnet'):
-                mag.append(i['href'])
-                
-        for a in soup.findAll('a',{"data-fileext":"torrent",'href':True}):
-            filelink.append(a['href'])
-
-        for title in bigtitle:
-            if title.find('span') == None:
-                pass
-            else:
-                if title.find('span').text.endswith('torrent'):
-                    alltitles.append(title.find('span').text[19:-8])
-
-        for p in range(0,len(mag)):
-#             print(f"*{alltitles[p]}* -->\n🧲 `{mag[p]}`\n🗒️->[Torrent file]({filelink[p]})")
-            try:
-              real_dict.setdefault(movie_list[num],[])
-              real_dict[movie_list[num]].append((f"*{alltitles[p]}* -->\n🧲 `{mag[p]}`\n🗒️->[Torrent file]({filelink[p]})"))
-            except:
-              pass
-            
-        num = num + 1
-
-
-    
+# Main function to start the bot
 def main():
-     bot.infinity_polling(timeout=10, long_polling_timeout = 5)
-#     bot.polling() # looking for message
-      
+    bot.infinity_polling()
 
 if __name__ == '__main__':
-    main() 
-   
-#shinas101
+    main()
+    
