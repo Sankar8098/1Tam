@@ -7,7 +7,8 @@ import re
 from bs4 import BeautifulSoup
 import asyncio
 
-TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
+TOKEN = 'YOUR_TELEGRAM_BOT_TOKEN'
+CHANNEL_USERNAME = '@YourChannelUsername'  # Use the channel username or ID
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -101,8 +102,10 @@ def tamilmv():
                 formatted_title = alltitles[p] if p < len(alltitles) else "Unknown Title"
                 formatted_filelink = filelink[p] if p < len(filelink) else "#"
                 real_dict[movie_list[num]].append(
-                    f"/qbleech `{mag[p]}`\n*{formatted_title}* -->\n🗒️->[Torrent file]({formatted_filelink})"
+                    f"🧲 `{mag[p]}`\n*{formatted_title}* -->\n🗒️->[Torrent file]({formatted_filelink})"
                 )
+                # Automatically post to the channel
+                post_to_channel(formatted_title, mag[p], formatted_filelink)
             except IndexError as e:
                 print(f"IndexError: {e}")
             except Exception as e:
@@ -110,8 +113,19 @@ def tamilmv():
 
         num += 1
 
+def post_to_channel(title, magnet, filelink):
+    try:
+        bot.send_message(
+            chat_id=CHANNEL_USERNAME,
+            text=f"🧲 `{magnet}`\n*{title}* -->\n🗒️->[Torrent file]({filelink})",
+            parse_mode='Markdown'
+        )
+    except Exception as e:
+        print(f"Error posting to channel: {e}")
+
 def main():
     bot.infinity_polling(timeout=10, long_polling_timeout=5)
 
 if __name__ == '__main__':
     main()
+        
