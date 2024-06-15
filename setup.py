@@ -142,6 +142,7 @@ def tamilmv():
 
 def post_to_channel(title, magnet, filelink):
     try:
+        print(f"Posting to channel: {title}")
         bot.send_message(
             chat_id=CHANNEL_USERNAME,
             text=f"/qbleech {magnet}\n*{title}* -->\n🗒️->[Torrent file]({filelink})",
