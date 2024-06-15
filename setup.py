@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 import asyncio
 
 TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
-CHANNEL_USERNAME = '@VijayTv_SerialsVideos'  # Use the channel username or ID
+CHANNEL_USERNAME = '-4111844983'  # Use the channel username or ID
 
 bot = telebot.TeleBot(TOKEN)
 
