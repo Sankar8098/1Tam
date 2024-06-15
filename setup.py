@@ -1,24 +1,33 @@
-from asyncio import events
-import telebot
-from telebot import types
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+import time
 import requests
 import re
 from bs4 import BeautifulSoup
-import asyncio
+import telebot
+from telebot import types
 
+# Configuration
 TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
 CHANNEL_USERNAME = '-4111844983'  # Use the channel username or ID
+MAIN_URL = 'https://www.1tamilmv.eu/'
+FETCH_INTERVAL = 3600  # Time in seconds to wait between fetches (1 hour)
 
+# Initialize bot
 bot = telebot.TeleBot(TOKEN)
 
-button1 = telebot.types.InlineKeyboardButton(text="⚡Powered by", url='https://t.me/heyboy2004')
-button2 = telebot.types.InlineKeyboardButton(text="🔗 Gdrive channel", url='https://t.me/GdtotLinkz')
-button3 = telebot.types.InlineKeyboardButton(text="📜 Status channel", url='https://t.me/TmvStatus')
-keyboard = telebot.types.InlineKeyboardMarkup().add(
-    telebot.types.InlineKeyboardButton('👨‍💻 Developed by', url='github.com/shinas101')
+# Global dictionaries and lists
+movie_dict = {}
+real_dict = {}
+movie_list = []
+posted_movies = set()
+
+# Keyboard for messages
+button1 = types.InlineKeyboardButton(text="⚡Powered by", url='https://t.me/heyboy2004')
+button2 = types.InlineKeyboardButton(text="🔗 Gdrive channel", url='https://t.me/GdtotLinkz')
+button3 = types.InlineKeyboardButton(text="📜 Status channel", url='https://t.me/TmvStatus')
+keyboard = types.InlineKeyboardMarkup().add(
+    types.InlineKeyboardButton('👨‍💻 Developed by', url='github.com/shinas101')
 ).add(button1).add(button2).add(button3)
-keyboard2 = telebot.types.InlineKeyboardMarkup().add(button2).add(button3)
+keyboard2 = types.InlineKeyboardMarkup().add(button2).add(button3)
 
 @bot.message_handler(commands=['start'])
 def random_answer(message):
@@ -59,7 +68,6 @@ def makeKeyboard():
     return markup
 
 def tamilmv():
-    mainUrl = 'https://www.1tamilmv.eu/'
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/106.0.0.0 Safari/537.36',
         'sec-ch-ua': '"Chromium";v="106", "Google Chrome";v="106", "Not;A=Brand";v="99"',
@@ -73,7 +81,7 @@ def tamilmv():
     real_dict = {}
     movie_list = []
 
-    web = requests.request("GET", mainUrl, headers=headers)
+    web = requests.request("GET", MAIN_URL, headers=headers)
     soup = BeautifulSoup(web.text, 'lxml')
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
 
@@ -102,10 +110,12 @@ def tamilmv():
                 formatted_title = alltitles[p] if p < len(alltitles) else "Unknown Title"
                 formatted_filelink = filelink[p] if p < len(filelink) else "#"
                 real_dict[movie_list[num]].append(
-                    f"/qbleech `{mag[p]}`\n*{formatted_title}* -->\n🗒️->[Torrent file]({formatted_filelink})"
+                    f"🧲 `{mag[p]}`\n*{formatted_title}* -->\n🗒️->[Torrent file]({formatted_filelink})"
                 )
-                # Automatically post to the channel
-                post_to_channel(formatted_title, mag[p], formatted_filelink)
+                # Automatically post to the channel if the movie is not already posted
+                if formatted_title not in posted_movies:
+                    post_to_channel(formatted_title, mag[p], formatted_filelink)
+                    posted_movies.add(formatted_title)
             except IndexError as e:
                 print(f"IndexError: {e}")
             except Exception as e:
@@ -117,15 +127,26 @@ def post_to_channel(title, magnet, filelink):
     try:
         bot.send_message(
             chat_id=CHANNEL_USERNAME,
-            text=f"/qbleech `{magnet}`\n*{title}* -->\n🗒️->[Torrent file]({filelink})",
+            text=f"🧲 `{magnet}`\n*{title}* -->\n🗒️->[Torrent file]({filelink})",
             parse_mode='Markdown'
         )
     except Exception as e:
         print(f"Error posting to channel: {e}")
 
+def fetch_and_post():
+    while True:
+        try:
+            tamilmv()
+            print("Fetched and posted new movies.")
+        except Exception as e:
+            print(f"Error during fetch and post: {e}")
+        time.sleep(FETCH_INTERVAL)
+
 def main():
+    import threading
+    fetch_thread = threading.Thread(target=fetch_and_post)
+    fetch_thread.start()
     bot.infinity_polling(timeout=10, long_polling_timeout=5)
 
 if __name__ == '__main__':
     main()
-        
