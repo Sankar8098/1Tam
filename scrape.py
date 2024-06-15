@@ -65,14 +65,47 @@ async def tamilmv():
     linker = []
     num = 0
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
+    
     for i in range(21):
         title = temps[i].findAll('a')[0].text
         badtitles.append(title)
         links = temps[i].find('a')['href']
         content = str(links)
         linker.append(content)
+        
     for element in badtitles:
         realtitles.append(title.strip())
-        append.strip()
-  are
+    
+    for url in linker:
+        html = requests.request("GET", url)
+        soup = BeautifulSoup(html.text, 'lxml')
+        pattern = re.compile(r"magnet:\?xt=urn:[a-z0-9]+:[a-zA-Z0-9]{40}")
+        bigtitle = soup.find_all('a')
+        alltitles = []
+        filelink = []
+        mag = []
+        
+        for i in soup.find_all('a', href=True):
+            if i['href'].startswith('magnet'):
+                mag.append(i['href'])
+                
+        for a in soup.findAll('a', {"data-fileext": "torrent", 'href': True}):
+            filelink.append(a['href'])
+            
+        for title in bigtitle:
+            if title.find('span') == None:
+                pass
+            else:
+                if title.find('span').text.endswith('torrent'):
+                    alltitles.append(title.find('span').text[19:-8])
+
+        try:
+            real_dict.setdefault(movie_list[num], [])
+            for p in range(0, len(mag)):
+                real_dict[movie_list[num]].append((f"*{alltitles[p]}* -->\n🧲 `{mag[p]}`\n🗒️->[Torrent file]({filelink[p]})"))
+        except:
+            pass
+
+        num = num + 1
+
         
