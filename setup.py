@@ -101,7 +101,7 @@ def tamilmv():
                 formatted_title = alltitles[p] if p < len(alltitles) else "Unknown Title"
                 formatted_filelink = filelink[p] if p < len(filelink) else "#"
                 real_dict[movie_list[num]].append(
-                    f"🧲 `{mag[p]}`\n*{formatted_title}* -->\n🗒️->[Torrent file]({formatted_filelink})"
+                    f"/qbleech `{mag[p]}`\n*{formatted_title}* -->\n🗒️->[Torrent file]({formatted_filelink})"
                 )
             except IndexError as e:
                 print(f"IndexError: {e}")
