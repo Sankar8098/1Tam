@@ -1,7 +1,4 @@
-regex
-bs4
-pyTelegramBotAPI
-aiogram
 beautifulsoup4==4.10.0
 requests==2.26.0
 telebot==0.0.4
+lxml==4.6.3
