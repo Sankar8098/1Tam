@@ -1,15 +1,13 @@
+import os
 import telebot
 from telebot import types
 import requests
 from bs4 import BeautifulSoup
 import re
 
-TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
+TOKEN = os.environ.get('6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg')  # Use environment variable for token
 
 bot = telebot.TeleBot(TOKEN)
-
-# Define your channel ID where you want to post updates
-channel_id = '-1001571491517'
 
 # Keyboard buttons setup
 button1 = types.InlineKeyboardButton(text="⚡ Powered by", url='https://t.me/heyboy2004')
@@ -89,7 +87,7 @@ def fetch_movies():
 
     try:
         web = requests.get(mainUrl, headers=headers)
-        soup = BeautifulSoup(web.text, 'lxml')
+        soup = BeautifulSoup(web.text, 'lxml')  # Ensure 'lxml' parser is used
 
         linker = []
         real_dict = {}
@@ -144,8 +142,11 @@ def fetch_movies():
 
 # Main function to start the bot
 def main():
-    bot.infinity_polling(timeout=10, long_polling_timeout=5)
+    try:
+        bot.polling(none_stop=True)  # Start the bot and continue polling
+    except Exception as e:
+        print(f"Error starting bot: {e}")
 
 if __name__ == '__main__':
     main()
-                
+    
