@@ -5,12 +5,12 @@ import requests
 import re
 from bs4 import BeautifulSoup
 
-TOKEN = 'YOUR_BOT_TOKEN_HERE'
+TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
 
 bot = telebot.TeleBot(TOKEN)
 
 # Define your channel ID where you want to post updates
-channel_id = 'YOUR_CHANNEL_ID_HERE'
+channel_id = '-1001571491517'
 
 # Keyboard buttons setup
 button1 = telebot.types.InlineKeyboardButton(text="⚡Powered by", url='https://t.me/heyboy2004')
