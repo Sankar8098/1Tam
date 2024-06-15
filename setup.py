@@ -7,7 +7,7 @@ import threading
 
 # Configuration
 TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
-CHANNEL_USERNAME = '@VijayTv_SerialsVideos'  # Use the channel username or ID
+CHANNEL_USERNAME = '-4111844983'  # Use the channel username or ID
 MAIN_URL = 'https://www.1tamilmv.eu/'
 FETCH_INTERVAL = 900  # Time in seconds to wait between fetches (15 minutes)
 
