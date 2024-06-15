@@ -6,8 +6,14 @@ import re
 from bs4 import BeautifulSoup
 import telebot
 from telebot import types
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)  # Set the desired logging level
 
 TOKEN = os.getenv('6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg')  # Retrieve your bot token from environment variables
+if TOKEN is None:
+    raise ValueError("Telegram bot token (TOKEN) not found. Make sure it's set as an environment variable.")
 
 bot = telebot.TeleBot(TOKEN)
 
@@ -29,16 +35,21 @@ def handle_start(message):
 # Handler for /view command
 @bot.message_handler(commands=['view'])
 def handle_view(message):
-    bot.send_message(message.chat.id, text="*Please wait for 10 seconds*", parse_mode='Markdown')
-    movie_links = fetch_movie_links()
-    if movie_links:
+    try:
+        bot.send_message(message.chat.id, text="*Please wait for 10 seconds*", parse_mode='Markdown')
+        movie_links = fetch_movie_links()
+        if movie_links:
+            bot.send_message(chat_id=message.chat.id,
+                             text="Select a Movie from the list 🙂 : ",
+                             reply_markup=make_keyboard(movie_links),
+                             parse_mode='HTML')
+        else:
+            bot.send_message(chat_id=message.chat.id,
+                             text="Sorry, unable to fetch movie links right now. Please try again later.")
+    except Exception as e:
+        logging.error(f"Exception in handle_view: {e}", exc_info=True)
         bot.send_message(chat_id=message.chat.id,
-                         text="Select a Movie from the list 🙂 : ",
-                         reply_markup=make_keyboard(movie_links),
-                         parse_mode='HTML')
-    else:
-        bot.send_message(chat_id=message.chat.id,
-                         text="Sorry, unable to fetch movie links right now. Please try again later.")
+                         text="Sorry, something went wrong while fetching movie links. Please try again later.")
 
 # Callback query handler
 @bot.callback_query_handler(func=lambda call: True)
@@ -51,7 +62,7 @@ def handle_callback_query(call):
                 bot.send_message(call.message.chat.id, text=link, parse_mode='markdown')
         bot.send_message(call.message.chat.id, text="🌐 Please Join Our Status Channel", parse_mode='markdown', reply_markup=keyboard2)
     except Exception as e:
-        print(f"Exception in handle_callback_query: {e}")
+        logging.error(f"Exception in handle_callback_query: {e}", exc_info=True)
         bot.send_message(call.message.chat.id, text="Sorry, something went wrong. Please try again later.")
 
 # Function to fetch movie links from 1TamilMV website
@@ -76,7 +87,7 @@ def fetch_movie_links():
         return movie_links
 
     except Exception as e:
-        print(f"Exception in fetch_movie_links: {e}")
+        logging.error(f"Exception in fetch_movie_links: {e}", exc_info=True)
         return None
 
 # Function to create inline keyboard
