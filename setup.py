@@ -126,7 +126,7 @@ def tamilmv():
                 formatted_title = alltitles[p] if p < len(alltitles) else "Unknown Title"
                 formatted_filelink = filelink[p] if p < len(filelink) else "#"
                 real_dict[movie_list[num]].append(
-                    f"/qbleech `{mag[p]}`\n*{formatted_title}* -->\n🗒️->[Torrent file]({formatted_filelink})"
+                    f"Magnet: {mag[p]}\n*{formatted_title}* -->\n🗒️->[Torrent file]({formatted_filelink})"
                 )
                 # Automatically post to the channel if the movie is not already posted
                 if formatted_title not in posted_movies:
@@ -144,7 +144,7 @@ def post_to_channel(title, magnet, filelink):
     try:
         bot.send_message(
             chat_id=CHANNEL_USERNAME,
-            text=f"/qbleech `{magnet}`\n*{title}* -->\n🗒️->[Torrent file]({filelink})",
+            text=f"Magnet: {magnet}\n*{title}* -->\n🗒️->[Torrent file]({filelink})",
             parse_mode='Markdown'
         )
     except Exception as e:
