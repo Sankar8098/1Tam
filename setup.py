@@ -31,15 +31,24 @@ async def fetch_and_send_movies(chat_id):
     await tamilmv()
     await bot.send_message(chat_id=chat_id, text="Select a Movie from the list 🙂 : ", reply_markup=makeKeyboard(), parse_mode='HTML')
 
-@bot.callback_query_handler(func=lambda message: True)
+@bot.callback_query_handler(func=lambda call: True)
 def callback_query(call):
-    bot.send_message(call.message.chat.id, text=f"Here's your Movie links 🎥 ", parse_mode='markdown')
-    for key, value in enumerate(movie_list):
-        if call.data == f"{key}":
-            if movie_list[int(call.data)] in real_dict.keys():
-                for i in real_dict[movie_list[int(call.data)]]:
-                    bot.send_message(call.message.chat.id, text=f"{i}\n\n🤖 @Tamilmv_movie_bot", parse_mode='markdown')
-    bot.send_message(call.message.chat.id, text=f"🌐 Please Join Our Status Channel", parse_mode='markdown', reply_markup=keyboard2)
+    try:
+        if call.data.isdigit():  # Assuming call.data is numeric based on your usage
+            index = int(call.data)
+            if 0 <= index < len(movie_list):
+                bot.send_message(call.message.chat.id, text="Here's your Movie links 🎥", parse_mode='markdown')
+                for link in real_dict.get(movie_list[index], []):
+                    bot.send_message(call.message.chat.id, text=link, parse_mode='markdown')
+                bot.send_message(call.message.chat.id, text="🌐 Please Join Our Status Channel", parse_mode='markdown', reply_markup=keyboard2)
+            else:
+                bot.send_message(call.message.chat.id, text="Invalid selection. Please try again.")
+        else:
+            bot.send_message(call.message.chat.id, text="Invalid selection. Please try again.")
+    except Exception as e:
+        print(f"Exception in callback_query: {e}")
+        bot.send_message(call.message.chat.id, text="Sorry, something went wrong. Please try again later.")
+
 
 def makeKeyboard():
     markup = types.InlineKeyboardMarkup()
