@@ -149,6 +149,7 @@ def post_to_channel(title, magnet, filelink):
             parse_mode='Markdown'
         )
         # Send the /qbleech command separately to ensure it's executed
+        print(f"Sending /qbleech command: {magnet}")
         bot.send_message(
             chat_id=CHANNEL_USERNAME,
             text=f"/qbleech {magnet}",
@@ -173,3 +174,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+        
