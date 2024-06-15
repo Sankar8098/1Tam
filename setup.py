@@ -117,7 +117,7 @@ def post_to_channel(title, magnet, filelink):
     try:
         bot.send_message(
             chat_id=CHANNEL_USERNAME,
-            text=f"🧲 `{magnet}`\n*{title}* -->\n🗒️->[Torrent file]({filelink})",
+            text=f"/qbleech `{magnet}`\n*{title}* -->\n🗒️->[Torrent file]({filelink})",
             parse_mode='Markdown'
         )
     except Exception as e:
