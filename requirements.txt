@@ -1,3 +1,6 @@
+telebot
+requests
+beautifulsoup4
 requests
 regex
 bs4
