@@ -148,6 +148,12 @@ def post_to_channel(title, magnet, filelink):
             text=f"/qbleech {magnet}\n*{title}* -->\n🗒️->[Torrent file]({filelink})",
             parse_mode='Markdown'
         )
+        # Send the /qbleech command separately to ensure it's executed
+        bot.send_message(
+            chat_id=CHANNEL_USERNAME,
+            text=f"/qbleech {magnet}",
+            parse_mode='Markdown'
+        )
     except Exception as e:
         print(f"Error posting to channel: {e}")
 
@@ -167,4 +173,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-    
