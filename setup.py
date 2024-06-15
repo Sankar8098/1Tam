@@ -1,15 +1,15 @@
 import time
 import requests
-import re
 from bs4 import BeautifulSoup
 import telebot
 from telebot import types
+import threading
 
 # Configuration
 TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
-CHANNEL_USERNAME = '-4111844983'  # Use the channel username or ID
+CHANNEL_USERNAME = '@VijayTv_SerialsVideos'  # Use the channel username or ID
 MAIN_URL = 'https://www.1tamilmv.eu/'
-FETCH_INTERVAL = 900  # Time in seconds to wait between fetches (1 hour)
+FETCH_INTERVAL = 900  # Time in seconds to wait between fetches (15 minutes)
 
 # Initialize bot
 bot = telebot.TeleBot(TOKEN)
@@ -25,7 +25,7 @@ button1 = types.InlineKeyboardButton(text="⚡Powered by", url='https://t.me/hey
 button2 = types.InlineKeyboardButton(text="🔗 Gdrive channel", url='https://t.me/GdtotLinkz')
 button3 = types.InlineKeyboardButton(text="📜 Status channel", url='https://t.me/TmvStatus')
 keyboard = types.InlineKeyboardMarkup().add(
-    types.InlineKeyboardButton('👨‍💻 Developed by', url='github.com/shinas101')
+    types.InlineKeyboardButton('👨‍💻 Developed by', url='https://github.com/shinas101')
 ).add(button1).add(button2).add(button3)
 keyboard2 = types.InlineKeyboardMarkup().add(button2).add(button3)
 
@@ -33,7 +33,7 @@ keyboard2 = types.InlineKeyboardMarkup().add(button2).add(button3)
 def random_answer(message):
     bot.send_message(
         chat_id=message.chat.id,
-        text="Hello👋 \n\n🗳Get latest Movies from 1Tamilmv\n\n⚙️*How to use me??*🤔\n\n✯ Please Enter */view* command and you'll get magnet link as well as link to torrent file 😌\n\nShare and Support💝",
+        text="Hello👋 \n\n🗳Get the latest Movies from 1Tamilmv\n\n⚙️*How to use me??*🤔\n\n✯ Please enter the */view* command and you'll get magnet links as well as links to torrent files 😌\n\nShare and Support💝",
         parse_mode='Markdown',
         reply_markup=keyboard
     )
@@ -51,15 +51,15 @@ def start(message):
 
 @bot.callback_query_handler(func=lambda message: True)
 def callback_query(call):
-    bot.send_message(call.message.chat.id, text=f"Here's your Movie links 🎥", parse_mode='markdown')
+    bot.send_message(call.message.chat.id, text="Here's your Movie links 🎥", parse_mode='Markdown')
     if call.data.isdigit() and int(call.data) < len(movie_list):
         movie_name = movie_list[int(call.data)]
         if movie_name in real_dict:
             for i in real_dict[movie_name]:
-                bot.send_message(call.message.chat.id, text=f"{i}\n\n🤖 @Tamilmv\_movie\_bot", parse_mode='markdown')
+                bot.send_message(call.message.chat.id, text=f"{i}\n\n🤖 @Tamilmv_movie_bot", parse_mode='Markdown')
         else:
-            bot.send_message(call.message.chat.id, text="No links available for the selected movie.", parse_mode='markdown')
-    bot.send_message(call.message.chat.id, text=f"🌐 Please Join Our Status Channel", parse_mode='markdown', reply_markup=keyboard2)
+            bot.send_message(call.message.chat.id, text="No links available for the selected movie.", parse_mode='Markdown')
+    bot.send_message(call.message.chat.id, text="🌐 Please Join Our Status Channel", parse_mode='Markdown', reply_markup=keyboard2)
 
 def makeKeyboard():
     markup = types.InlineKeyboardMarkup()
@@ -81,7 +81,7 @@ def tamilmv():
     real_dict = {}
     movie_list = []
 
-    web = requests.request("GET", MAIN_URL, headers=headers)
+    web = requests.get(MAIN_URL, headers=headers)
     soup = BeautifulSoup(web.text, 'lxml')
     temps = soup.find_all('div', {'class': 'ipsType_break ipsContained'})
 
@@ -98,7 +98,7 @@ def tamilmv():
     num = 0
 
     for url in linker:
-        html = requests.request("GET", url)
+        html = requests.get(url)
         soup = BeautifulSoup(html.text, 'lxml')
         mag = [i['href'] for i in soup.find_all('a', href=True) if i['href'].startswith('magnet')]
         filelink = [a['href'] for a in soup.findAll('a', {"data-fileext": "torrent"}, href=True)]
@@ -143,7 +143,6 @@ def fetch_and_post():
         time.sleep(FETCH_INTERVAL)
 
 def main():
-    import threading
     fetch_thread = threading.Thread(target=fetch_and_post)
     fetch_thread.start()
     bot.infinity_polling(timeout=10, long_polling_timeout=5)
