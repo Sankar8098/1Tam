@@ -4,12 +4,14 @@ from bs4 import BeautifulSoup
 import telebot
 from telebot import types
 import threading
+import os
 
 # Configuration
 TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
 CHANNEL_USERNAME = '-4111844983'  # Use the channel username or ID
 MAIN_URL = 'https://www.1tamilmv.eu/'
 FETCH_INTERVAL = 900  # Time in seconds to wait between fetches (15 minutes)
+POSTED_MOVIES_FILE = 'posted_movies.txt'
 
 # Initialize bot
 bot = telebot.TeleBot(TOKEN)
@@ -18,7 +20,21 @@ bot = telebot.TeleBot(TOKEN)
 movie_dict = {}
 real_dict = {}
 movie_list = []
-posted_movies = set()
+
+# Load posted movies from file
+def load_posted_movies():
+    if os.path.exists(POSTED_MOVIES_FILE):
+        with open(POSTED_MOVIES_FILE, 'r') as file:
+            return set(line.strip() for line in file)
+    return set()
+
+posted_movies = load_posted_movies()
+
+# Save posted movies to file
+def save_posted_movies():
+    with open(POSTED_MOVIES_FILE, 'w') as file:
+        for movie in posted_movies:
+            file.write(f"{movie}\n")
 
 # Keyboard for messages
 button1 = types.InlineKeyboardButton(text="⚡Powered by", url='https://t.me/heyboy2004')
@@ -116,6 +132,7 @@ def tamilmv():
                 if formatted_title not in posted_movies:
                     post_to_channel(formatted_title, mag[p], formatted_filelink)
                     posted_movies.add(formatted_title)
+                    save_posted_movies()
             except IndexError as e:
                 print(f"IndexError: {e}")
             except Exception as e:
