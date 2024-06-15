@@ -11,7 +11,7 @@ import logging
 # Configure logging
 logging.basicConfig(level=logging.INFO)  # Set the desired logging level
 
-TOKEN = os.getenv('6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg')  # Retrieve your bot token from environment variables
+TOKEN = os.getenv('')  # Retrieve your bot token from environment variables
 if TOKEN is None:
     raise ValueError("Telegram bot token (TOKEN) not found. Make sure it's set as an environment variable.")
 
