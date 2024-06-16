@@ -5,15 +5,14 @@ import telebot
 from telebot import types
 import threading
 import os
-import libtorrent as lt
+from transmissionrpc import Client
 
 # Configuration
-TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
-CHANNEL_USERNAME = '-4111844983'  # Use the channel username or ID
-MAIN_URL = 'https://www.1tamilmv.eu/'
+TOKEN = 'YOUR_BOT_API_TOKEN'
+CHANNEL_USERNAME = '@YourChannelUsername'  # Use the channel username or ID
+MAIN_URL = 'https://www.1tamilmv.help/'
 FETCH_INTERVAL = 900  # Time in seconds to wait between fetches (15 minutes)
 POSTED_MOVIES_FILE = 'posted_movies.txt'
-DOWNLOAD_PATH = 'downloads'  # Path to save downloaded videos
 
 # Initialize bot
 bot = telebot.TeleBot(TOKEN)
@@ -120,52 +119,24 @@ def fetch_movie_links(url):
 
 def post_to_channel(title, magnet, torrent):
     try:
-        video_path = download_video(torrent)
-        if video_path:
-            bot.send_video(
-                chat_id=CHANNEL_USERNAME,
-                video=open(video_path, 'rb'),
-                caption=f"{title}\n\nDownload Link: {torrent}",
-                parse_mode='Markdown'
-            )
-            os.remove(video_path)
+        download_torrent(torrent, title)
+        # Post to channel logic can go here after download completes
     except Exception as e:
         print(f"Error posting to channel: {e}")
 
-def download_video(torrent_url):
-    # Ensure the download path exists
-    if not os.path.exists(DOWNLOAD_PATH):
-        os.makedirs(DOWNLOAD_PATH)
+def download_torrent(torrent_url, title):
+    # Transmission client setup
+    tc = Client('localhost', port=9091, username='transmission', password='transmission')
 
-    ses = lt.session()
-    params = {
-        'save_path': DOWNLOAD_PATH,
-        'storage_mode': lt.storage_mode_t(2),
-        'paused': False,
-        'auto_managed': True,
-        'duplicate_is_error': True
-    }
+    # Add torrent to transmission
+    tc.add_torrent(torrent_url)
 
-    handle = lt.add_magnet_uri(ses, torrent_url, params)
-    ses.start_dht()
+    # You can handle the download progress and completion logic here
+    # For simplicity, this example just waits for a fixed time
+    time.sleep(300)  # Simulating a 5-minute download
 
-    print('downloading metadata...')
-    while not handle.has_metadata():
-        time.sleep(1)
-    print('got metadata, starting torrent download...')
-    
-    while handle.status().state != lt.torrent_status.seeding:
-        s = handle.status()
-        print('%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % (
-            s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000,
-            s.num_peers, s.state))
-        time.sleep(5)
-    
-    print('download complete, seeding...')
-    handle.set_sequential_download(True)
-    torrent_info = handle.get_torrent_info()
-    video_path = os.path.join(DOWNLOAD_PATH, torrent_info.files()[0].path)
-    return video_path
+    # Assuming the torrent is downloaded to a specific directory
+    # You can then proceed to post the downloaded file to Telegram
 
 def fetch_and_post():
     while True:
