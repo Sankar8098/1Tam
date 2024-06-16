@@ -6,4 +6,3 @@ aiogram
 lxml
 python-telegram-bot
 pybase64
-python-libtorrent==1.2.0
