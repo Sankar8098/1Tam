@@ -8,9 +8,9 @@ import os
 from transmissionrpc import Client
 
 # Configuration
-TOKEN = 'YOUR_BOT_API_TOKEN'
-CHANNEL_USERNAME = '@YourChannelUsername'  # Use the channel username or ID
-MAIN_URL = 'https://www.1tamilmv.help/'
+TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
+CHANNEL_USERNAME = '-4111844983'  # Use the channel username or ID
+MAIN_URL = 'https://www.1tamilmv.eu/'
 FETCH_INTERVAL = 900  # Time in seconds to wait between fetches (15 minutes)
 POSTED_MOVIES_FILE = 'posted_movies.txt'
 
