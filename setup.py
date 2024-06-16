@@ -5,11 +5,12 @@ import telebot
 from telebot import types
 import threading
 import os
+import libtorrent as lt
 
 # Configuration
 TOKEN = '6769849216:AAGxT73eYO9wmrlqZlZ73DmyN3Ls3CvH6dg'
 CHANNEL_USERNAME = '-4111844983'  # Use the channel username or ID
-MAIN_URL = 'https://www.1tamilmv.eu/'
+MAIN_URL = 'https://www.1tamilmv.help/'
 FETCH_INTERVAL = 900  # Time in seconds to wait between fetches (15 minutes)
 POSTED_MOVIES_FILE = 'posted_movies.txt'
 DOWNLOAD_PATH = 'downloads'  # Path to save downloaded videos
@@ -136,14 +137,34 @@ def download_video(torrent_url):
     if not os.path.exists(DOWNLOAD_PATH):
         os.makedirs(DOWNLOAD_PATH)
 
-    video_path = os.path.join(DOWNLOAD_PATH, 'sample_video.mp4')
+    ses = lt.session()
+    params = {
+        'save_path': DOWNLOAD_PATH,
+        'storage_mode': lt.storage_mode_t(2),
+        'paused': False,
+        'auto_managed': True,
+        'duplicate_is_error': True
+    }
 
-    # Dummy implementation: Simulate a download by creating a dummy file
-    with open(video_path, 'wb') as f:
-        f.write(b'\x00' * 1024 * 1024 * 10)  # 10MB dummy file
+    handle = lt.add_magnet_uri(ses, torrent_url, params)
+    ses.start_dht()
 
-    # Replace the above code with actual download logic
-    # For example, using a library like `libtorrent` to download the video file
+    print('downloading metadata...')
+    while not handle.has_metadata():
+        time.sleep(1)
+    print('got metadata, starting torrent download...')
+    
+    while handle.status().state != lt.torrent_status.seeding:
+        s = handle.status()
+        print('%.2f%% complete (down: %.1f kB/s up: %.1f kB/s peers: %d) %s' % (
+            s.progress * 100, s.download_rate / 1000, s.upload_rate / 1000,
+            s.num_peers, s.state))
+        time.sleep(5)
+    
+    print('download complete, seeding...')
+    handle.set_sequential_download(True)
+    torrent_info = handle.get_torrent_info()
+    video_path = os.path.join(DOWNLOAD_PATH, torrent_info.files()[0].path)
     return video_path
 
 def fetch_and_post():
