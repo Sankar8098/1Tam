@@ -6,5 +6,5 @@ aiogram
 lxml
 python-telegram-bot
 pybase64
-transmissionrpc==0.12
-beautifulsoup4==4.9.3
+transmissionrpc
+beautifulsoup4
